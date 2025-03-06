@@ -1,12 +1,11 @@
-from django.shortcuts import render, redirect
+
 from django.http import JsonResponse
 from .models import *
-from django.core.exceptions import ObjectDoesNotExist
-from django.views.generic import ListView, DetailView
-from django.http import HttpResponse, HttpRequest, Http404
-from django.core.serializers.json import DjangoJSONEncoder
-from django.core import serializers
 
+from django.http import HttpResponse, HttpRequest, Http404
+
+from django.views.decorators.csrf import csrf_exempt
+import json
 # class MyEncoder(DjangoJSONEncoder):
 #     def default(self, o):
 #         if isinstance(o, Q):
@@ -176,3 +175,27 @@ def preparate_data(task_data: Task, tag_data: list[Tag]):
         }
         return task_dict
                 
+
+def delete_tag(request: HttpRequest, tag_id: int):
+    tag = Tag.objects.filter(id=tag_id)
+    if tag:
+        tag.delete()
+        return JsonResponse("Тэг удален")
+    return Http404("Tag not found")
+
+def delete_task(request: HttpRequest, task_id: int):
+    task = Task.objects.filter(id=task_id)
+    if task:
+        task.delete()
+        return HttpResponse("Задачка удалена")
+    return HttpResponse("Task not found")
+
+
+@csrf_exempt
+def task_create(request: HttpResponse):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        # task = Task.objects.create(
+        #     title=data["title"]
+        # )
+        # task.save()
