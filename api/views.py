@@ -108,6 +108,8 @@ def get_tasks_completed(request: HttpRequest):
 
 
 def get_tasks_uncompleted(request: HttpRequest):
+
+    
     if request.method == 'GET':
         tasks = Task.objects.filter(complition=False)
         tasks_list = []
