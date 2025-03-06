@@ -44,13 +44,8 @@ def task_list(request: HttpRequest):
         for task in tasks:
             tags = task.tag.all()
             tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
-            task_dict = {
-                "id": task.id,
-                "title": task.title,
-                "complition": task.complition,
-                "tags": tags_list
-            }
-            tasks_list.append(task_dict)
+
+            tasks_list.append(preparate_data(task, tags_list))
 
         return JsonResponse(tasks_list, safe=False)
 
@@ -96,13 +91,8 @@ def get_tasks_completed(request: HttpRequest):
         for task in tasks:
             tags = task.tag.all()
             tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
-            task_dict = {
-                "id": task.id,
-                "title": task.title,
-                "complition": task.complition,
-                "tags": tags_list
-            }
-            tasks_list.append(task_dict)
+
+            tasks_list.append(preparate_data(task, tags_list))
 
         return JsonResponse(tasks_list, safe=False)
 
@@ -117,32 +107,72 @@ def get_tasks_uncompleted(request: HttpRequest):
         for task in tasks:
             tags = task.tag.all()
             tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
-            task_dict = {
-                "id": task.id,
-                "title": task.title,
-                "complition": task.complition,
-                "tags": tags_list
-            }
-            tasks_list.append(task_dict)
+
+            tasks_list.append(preparate_data(task, tags_list))
 
         return JsonResponse(tasks_list, safe=False)
 
+def tag_list(request: HttpRequest):
+    if request.method == 'GET':
+        # test = Task.objects.filter(tag=1)
+        # print(test)
+        tags = Tag.objects.all()
+        tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+        return JsonResponse(tags_list, safe=False)
+    
+def tag_detail(request: HttpRequest, tag_id: int):
+    if request.method == 'GET':
+            tag = Tag.objects.get(id=tag_id)
+            tag_dict = {
+                "id": tag.id,
+                "name": tag.name
+            }
+            return JsonResponse(tag_dict)
 
 
+#/tasks/?tags=1,2,3
 
+def task_via_tag_id(request: HttpRequest, tag_id: int):
+    if request.method == 'GET':
+        tasks = Task.objects.filter(tag=tag_id)
+        tasks_list = []
+        for task in tasks:
+            tags = task.tag.all()
+            tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+            tasks_list.append(preparate_data(task, tags_list))
 
+        return JsonResponse(tasks_list, safe=False)
+    
+def task_via_tag_id_uncompleted(request: HttpRequest, tag_id: int):
+    if request.method == 'GET':
+        tasks = Task.objects.filter(tag=tag_id, complition=False)
+        tasks_list = []
+        for task in tasks:
+            tags = task.tag.all()
+            tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+            tasks_list.append(preparate_data(task, tags_list))
 
+        return JsonResponse(tasks_list, safe=False)
+    
+def task_via_tag_id_completed(request: HttpRequest, tag_id: int):
+    if request.method == 'GET':
+        tasks = Task.objects.filter(tag=tag_id, complition=True)
+        tasks_list = []
+        for task in tasks:
+            tags = task.tag.all()
+            tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+            tasks_list.append(preparate_data(task, tags_list))
 
-    #   if request.method == 'GET':
-    #     tasks = Task.objects.all()
-    #     output = list()
-    #     for task in tasks:
-    #         # task_data = serializers.serialize('json', task)
-    #         dict_task = dict()
-    #         dict_task['title'] = task[0].title
-    #         output.append(task_data)
-    #     return JsonResponse(output, safe=False)
-   
+        return JsonResponse(tasks_list, safe=False)
+        
 
-    # pass
-
+def preparate_data(task_data: Task, tag_data: list[Tag]):
+            
+        task_dict = {
+            "id": task_data.id,
+            "title": task_data.title,
+            "complition": task_data.complition,
+            "tags": tag_data
+        }
+        return task_dict
+                
