@@ -191,11 +191,44 @@ def delete_task(request: HttpRequest, task_id: int):
     return HttpResponse("Task not found")
 
 
+# @csrf_exempt
+# def task_create(request: HttpResponse):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         # task = Task.objects.create(
+#         #     title=data["title"]
+#         # )
+#         # task.save()
 @csrf_exempt
-def task_create(request: HttpResponse):
+def task_create(request: HttpRequest):
     if request.method == 'POST':
         data = json.loads(request.body)
-        # task = Task.objects.create(
-        #     title=data["title"]
-        # )
-        # task.save()
+
+        task = Task.objects.create(
+            title=data['title'],
+            complition=data.get('complition', False)
+        )
+
+        if 'tags' in data:
+            tags = Tag.objects.filter(id__in=data['tags'])
+            task.tag.set(tags)
+
+        tags = task.tag.all()
+        tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+        
+        response_data = preparate_data(task, tags_list)
+        
+        response_data['_links'] = {
+            'self': {
+                'type': 'GET',
+                'url': f'{request.build_absolute_uri("/")}tasks/{task.id}/'
+            }
+        }
+        
+        return JsonResponse(response_data, status=201)
+    
+
+
+
+# def tes_post(request):
+#     print(request.body)

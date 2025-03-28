@@ -14,5 +14,6 @@ urlpatterns = [
      path('tags/<int:tag_id>/tasks/uncompleted', views.task_via_tag_id_uncompleted, name='task_via_tag_id_uncompleted'),
      path('tags/delete/<int:tag_id>', views.delete_tag),
      path('tasks/delete/<int:task_id>', views.delete_task),
-     path("tasks/create/", views.task_create)
+     path("tasks/create/", views.task_create),
+    #  path("test/", views.tes_post)
 ]
