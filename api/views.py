@@ -6,6 +6,7 @@ from django.http import HttpResponse, HttpRequest, Http404
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import cache_control, never_cache
+from django.views.decorators.http import require_http_methods
 import json
 # class MyEncoder(DjangoJSONEncoder):
 #     def default(self, o):
@@ -236,6 +237,8 @@ def delete_tag(request: HttpRequest, tag_id: int):
     return Http404("Tag not found")
 
 @never_cache
+@csrf_exempt
+@require_http_methods(["DELETE"])
 def delete_task(request: HttpRequest, task_id: int):
     task = Task.objects.filter(id=task_id)
     if task:
