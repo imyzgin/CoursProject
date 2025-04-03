@@ -5,6 +5,7 @@ from .models import *
 from django.http import HttpResponse, HttpRequest, Http404
 
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import cache_control, never_cache
 import json
 # class MyEncoder(DjangoJSONEncoder):
 #     def default(self, o):
@@ -23,6 +24,12 @@ import json
 #     ]
 # }
 
+@cache_control (
+    private=True,
+    max_age = 720 * 60,
+    no_cache = True,
+    no_site = False
+)
 def task_list(request: HttpRequest):
     # if request.method == 'GET':
     #     tasks = Task.objects.all()
@@ -48,7 +55,12 @@ def task_list(request: HttpRequest):
 
         return JsonResponse(tasks_list, safe=False)
 
-
+@cache_control (
+    private=True,
+    max_age = 720 * 60,
+    no_cache = True,
+    no_site = False
+)
 def task_detail(request: HttpRequest, task_id: int):
     if request.method == 'GET':
         # try:
@@ -69,7 +81,12 @@ def task_detail(request: HttpRequest, task_id: int):
         #     raise Http404("Task not found")
 
 
-    
+@cache_control (
+    private=True,
+    max_age = 720 * 60,
+    no_cache = True,
+    no_site = False
+)    
 def get_tasks_completed(request: HttpRequest):
     # if request.method == 'GET':
     #     tasks = Task.objects.all()
@@ -95,7 +112,12 @@ def get_tasks_completed(request: HttpRequest):
 
         return JsonResponse(tasks_list, safe=False)
 
-
+@cache_control (
+    private=True,
+    max_age = 720 * 60,
+    no_cache = True,
+    no_site = False
+)
 def get_tasks_uncompleted(request: HttpRequest):
 
     
@@ -111,6 +133,12 @@ def get_tasks_uncompleted(request: HttpRequest):
 
         return JsonResponse(tasks_list, safe=False)
 
+@cache_control (
+    private=True,
+    max_age = 720 * 60,
+    no_cache = True,
+    no_site = False
+)
 def tag_list(request: HttpRequest):
     if request.method == 'GET':
         # test = Task.objects.filter(tag=1)
@@ -118,7 +146,13 @@ def tag_list(request: HttpRequest):
         tags = Tag.objects.all()
         tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
         return JsonResponse(tags_list, safe=False)
-    
+
+@cache_control (
+    private=True,
+    max_age = 720 * 60,
+    no_cache = True,
+    no_site = False
+)
 def tag_detail(request: HttpRequest, tag_id: int):
     if request.method == 'GET':
             tag = Tag.objects.get(id=tag_id)
@@ -131,6 +165,12 @@ def tag_detail(request: HttpRequest, tag_id: int):
 
 #/tasks/?tags=1,2,3
 
+@cache_control (
+    private=True,
+    max_age = 720 * 60,
+    no_cache = True,
+    no_site = False
+)
 def task_via_tag_id(request: HttpRequest, tag_id: int):
     if request.method == 'GET':
         tasks = Task.objects.filter(tag=tag_id)
@@ -141,7 +181,13 @@ def task_via_tag_id(request: HttpRequest, tag_id: int):
             tasks_list.append(preparate_data(task, tags_list))
 
         return JsonResponse(tasks_list, safe=False)
-    
+
+@cache_control (
+    private=True,
+    max_age = 720 * 60,
+    no_cache = True,
+    no_site = False
+)
 def task_via_tag_id_uncompleted(request: HttpRequest, tag_id: int):
     if request.method == 'GET':
         tasks = Task.objects.filter(tag=tag_id, complition=False)
@@ -152,7 +198,13 @@ def task_via_tag_id_uncompleted(request: HttpRequest, tag_id: int):
             tasks_list.append(preparate_data(task, tags_list))
 
         return JsonResponse(tasks_list, safe=False)
-    
+
+@cache_control (
+    private=True,
+    max_age = 720 * 60,
+    no_cache = True,
+    no_site = False
+)    
 def task_via_tag_id_completed(request: HttpRequest, tag_id: int):
     if request.method == 'GET':
         tasks = Task.objects.filter(tag=tag_id, complition=True)
@@ -175,7 +227,7 @@ def preparate_data(task_data: Task, tag_data: list[Tag]):
         }
         return task_dict
                 
-
+@never_cache
 def delete_tag(request: HttpRequest, tag_id: int):
     tag = Tag.objects.filter(id=tag_id)
     if tag:
@@ -183,6 +235,7 @@ def delete_tag(request: HttpRequest, tag_id: int):
         return JsonResponse("Тэг удален")
     return Http404("Tag not found")
 
+@never_cache
 def delete_task(request: HttpRequest, task_id: int):
     task = Task.objects.filter(id=task_id)
     if task:
@@ -199,6 +252,7 @@ def delete_task(request: HttpRequest, task_id: int):
 #         #     title=data["title"]
 #         # )
 #         # task.save()
+@never_cache
 @csrf_exempt
 def task_create(request: HttpRequest):
     if request.method == 'POST':
