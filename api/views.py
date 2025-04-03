@@ -26,7 +26,7 @@ import json
 
 @cache_control (
     private=True,
-    max_age = 720 * 60,
+    max_age = 180 * 60, #6 часов
     no_cache = True,
     no_site = False
 )
@@ -57,8 +57,8 @@ def task_list(request: HttpRequest):
 
 @cache_control (
     private=True,
-    max_age = 720 * 60,
-    no_cache = True,
+    max_age = 720 * 60, #12 часов
+    no_cache = False,
     no_site = False
 )
 def task_detail(request: HttpRequest, task_id: int):
@@ -83,7 +83,7 @@ def task_detail(request: HttpRequest, task_id: int):
 
 @cache_control (
     private=True,
-    max_age = 720 * 60,
+    max_age = 720 * 60, # 12 hours
     no_cache = True,
     no_site = False
 )    
@@ -114,7 +114,7 @@ def get_tasks_completed(request: HttpRequest):
 
 @cache_control (
     private=True,
-    max_age = 720 * 60,
+    max_age = 720 * 60, #12 часов
     no_cache = True,
     no_site = False
 )
@@ -135,7 +135,7 @@ def get_tasks_uncompleted(request: HttpRequest):
 
 @cache_control (
     private=True,
-    max_age = 720 * 60,
+    max_age = 1440 * 60, # 24 часа
     no_cache = True,
     no_site = False
 )
@@ -149,8 +149,8 @@ def tag_list(request: HttpRequest):
 
 @cache_control (
     private=True,
-    max_age = 720 * 60,
-    no_cache = True,
+    max_age = 43200 * 60, # месяц
+    no_cache = False,
     no_site = False
 )
 def tag_detail(request: HttpRequest, tag_id: int):
@@ -167,7 +167,7 @@ def tag_detail(request: HttpRequest, tag_id: int):
 
 @cache_control (
     private=True,
-    max_age = 720 * 60,
+    max_age = 720 * 60, #12 часов
     no_cache = True,
     no_site = False
 )
@@ -184,7 +184,7 @@ def task_via_tag_id(request: HttpRequest, tag_id: int):
 
 @cache_control (
     private=True,
-    max_age = 720 * 60,
+    max_age = 720 * 60, #12
     no_cache = True,
     no_site = False
 )
@@ -201,7 +201,7 @@ def task_via_tag_id_uncompleted(request: HttpRequest, tag_id: int):
 
 @cache_control (
     private=True,
-    max_age = 720 * 60,
+    max_age = 720 * 60, #12
     no_cache = True,
     no_site = False
 )    
