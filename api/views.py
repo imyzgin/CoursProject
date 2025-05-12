@@ -128,8 +128,8 @@ def task_list_create(request: HttpRequest):
     no_site=False
 )
 @csrf_exempt
-@require_http_methods(["GET", "DELETE"])
-def task_detail_delete(request: HttpRequest, task_id: int):
+@require_http_methods(["GET", "DELETE", "PATCH"])
+def task_detail_delete_update(request: HttpRequest, task_id: int):
     try:
         task = Task.objects.get(id=task_id)
     except Task.DoesNotExist:
@@ -144,16 +144,44 @@ def task_detail_delete(request: HttpRequest, task_id: int):
     elif request.method == 'DELETE':
         task.delete()
         return JsonResponse({"message": "Task deleted successfully"}, status=204)
+    
+    elif request.method == 'PATCH':
+        try:
+            data = json.loads(request.body)
+            
+            # Обновляем поля задачи
+            if 'title' in data:
+                task.title = data['title']
+            if 'complition' in data:
+                task.complition = data['complition']
+            
+            # Обновляем теги, если они переданы
+            if 'tags' in data:
+                tags = Tag.objects.filter(id__in=data['tags'])
+                task.tag.set(tags)
+            
+            task.save()
+            
+            tags = task.tag.all()
+            tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+            response_data = preparate_data(task, tags_list)
+            
+            return JsonResponse(response_data)
+        
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON data"}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
 @cache_control(
     private=True,
-    max_age=1440 * 60,  # 24 часа
-    no_cache=True,
+    max_age=43200 * 60,  # месяц
+    no_cache=False,
     no_site=False
 )
 @csrf_exempt
-@require_http_methods(["GET", "DELETE"])
-def tag_detail_delete(request: HttpRequest, tag_id: int):
+@require_http_methods(["GET", "DELETE", "PATCH"])
+def tag_detail_delete_update(request: HttpRequest, tag_id: int):
     try:
         tag = Tag.objects.get(id=tag_id)
     except Tag.DoesNotExist:
@@ -169,6 +197,24 @@ def tag_detail_delete(request: HttpRequest, tag_id: int):
     elif request.method == 'DELETE':
         tag.delete()
         return JsonResponse({"message": "Tag deleted successfully"}, status=204)
+    
+    elif request.method == 'PATCH':
+        try:
+            data = json.loads(request.body)
+            
+            if 'name' in data:
+                tag.name = data['name']
+                tag.save()
+            
+            return JsonResponse({
+                "id": tag.id,
+                "name": tag.name
+            })
+        
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON data"}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
 
 
@@ -233,6 +279,7 @@ def get_tasks_uncompleted(request: HttpRequest):
             tasks_list.append(preparate_data(task, tags_list))
 
         return JsonResponse(tasks_list, safe=False)
+
 
 @cache_control(
     private=True,
