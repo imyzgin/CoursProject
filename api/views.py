@@ -56,30 +56,130 @@ def task_list(request: HttpRequest):
 
         return JsonResponse(tasks_list, safe=False)
 
-@cache_control (
-    private=True,
-    max_age = 720 * 60, #12 часов
-    no_cache = False,
-    no_site = False
-)
-def task_detail(request: HttpRequest, task_id: int):
-    if request.method == 'GET':
-        # try:
-            task = Task.objects.get(id=task_id)
+# @cache_control (
+#     private=True,
+#     max_age = 720 * 60, #12 часов
+#     no_cache = False,
+#     no_site = False
+# )
+# def task_detail(request: HttpRequest, task_id: int):
+#     if request.method == 'GET':
+#         # try:
+#             task = Task.objects.get(id=task_id)
             
-            tags = task.tag.all()
-            tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+#             tags = task.tag.all()
+#             tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
             
-            task_dict = {
-                "id": task.id,
-                "title": task.title,
-                "complition": task.complition,
-                "tags": tags_list
-            }
+#             task_dict = {
+#                 "id": task.id,
+#                 "title": task.title,
+#                 "complition": task.complition,
+#                 "tags": tags_list
+#             }
             
-            return JsonResponse(task_dict)
+#             return JsonResponse(task_dict)
         # except Task.DoesNotExist:
         #     raise Http404("Task not found")
+
+
+@cache_control(
+    private=True,
+    max_age=180 * 60,  # 6 часов
+    no_cache=True,
+    no_site=False
+)
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def task_list_create(request: HttpRequest):
+    if request.method == 'GET':
+        tasks = Task.objects.all()
+        tasks_list = []
+        for task in tasks:
+            tags = task.tag.all()
+            tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+            tasks_list.append(preparate_data(task, tags_list))
+        return JsonResponse(tasks_list, safe=False)
+    
+    elif request.method == 'POST':
+        data = json.loads(request.body)
+        task = Task.objects.create(
+            title=data['title'],
+            complition=data.get('complition', False)
+        )
+        if 'tags' in data:
+            tags = Tag.objects.filter(id__in=data['tags'])
+            task.tag.set(tags)
+        
+        tags = task.tag.all()
+        tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+        response_data = preparate_data(task, tags_list)
+        response_data['_links'] = {
+            'self': {
+                'type': 'GET',
+                'url': f'{request.build_absolute_uri("/")}tasks/{task.id}/'
+            }
+        }
+        return JsonResponse(response_data, status=201)
+
+@cache_control(
+    private=True,
+    max_age=720 * 60,  # 12 часов
+    no_cache=False,
+    no_site=False
+)
+@csrf_exempt
+@require_http_methods(["GET", "DELETE"])
+def task_detail_delete(request: HttpRequest, task_id: int):
+    try:
+        task = Task.objects.get(id=task_id)
+    except Task.DoesNotExist:
+        return JsonResponse({"error": "Task not found"}, status=404)
+    
+    if request.method == 'GET':
+        tags = task.tag.all()
+        tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+        task_dict = preparate_data(task, tags_list)
+        return JsonResponse(task_dict)
+    
+    elif request.method == 'DELETE':
+        task.delete()
+        return JsonResponse({"message": "Task deleted successfully"}, status=204)
+
+@cache_control(
+    private=True,
+    max_age=1440 * 60,  # 24 часа
+    no_cache=True,
+    no_site=False
+)
+@csrf_exempt
+@require_http_methods(["GET", "DELETE"])
+def tag_detail_delete(request: HttpRequest, tag_id: int):
+    try:
+        tag = Tag.objects.get(id=tag_id)
+    except Tag.DoesNotExist:
+        return JsonResponse({"error": "Tag not found"}, status=404)
+    
+    if request.method == 'GET':
+        tag_dict = {
+            "id": tag.id,
+            "name": tag.name
+        }
+        return JsonResponse(tag_dict)
+    
+    elif request.method == 'DELETE':
+        tag.delete()
+        return JsonResponse({"message": "Tag deleted successfully"}, status=204)
+
+
+
+
+
+
+
+
+
+
+
 
 
 @cache_control (
@@ -148,20 +248,20 @@ def tag_list(request: HttpRequest):
         tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
         return JsonResponse(tags_list, safe=False)
 
-@cache_control (
-    private=True,
-    max_age = 43200 * 60, # месяц
-    no_cache = False,
-    no_site = False
-)
-def tag_detail(request: HttpRequest, tag_id: int):
-    if request.method == 'GET':
-            tag = Tag.objects.get(id=tag_id)
-            tag_dict = {
-                "id": tag.id,
-                "name": tag.name
-            }
-            return JsonResponse(tag_dict)
+# @cache_control (
+#     private=True,
+#     max_age = 43200 * 60, # месяц
+#     no_cache = False,
+#     no_site = False
+# )
+# def tag_detail(request: HttpRequest, tag_id: int):
+#     if request.method == 'GET':
+#             tag = Tag.objects.get(id=tag_id)
+#             tag_dict = {
+#                 "id": tag.id,
+#                 "name": tag.name
+#             }
+#             return JsonResponse(tag_dict)
 
 
 #/tasks/?tags=1,2,3
@@ -228,23 +328,23 @@ def preparate_data(task_data: Task, tag_data: list[Tag]):
         }
         return task_dict
                 
-@never_cache
-def delete_tag(request: HttpRequest, tag_id: int):
-    tag = Tag.objects.filter(id=tag_id)
-    if tag:
-        tag.delete()
-        return JsonResponse("Тэг удален")
-    return Http404("Tag not found")
+# @never_cache
+# def delete_tag(request: HttpRequest, tag_id: int):
+#     tag = Tag.objects.filter(id=tag_id)
+#     if tag:
+#         tag.delete()
+#         return JsonResponse("Тэг удален")
+#     return Http404("Tag not found")
 
-@never_cache
-@csrf_exempt
-@require_http_methods(["DELETE"])
-def delete_task(request: HttpRequest, task_id: int):
-    task = Task.objects.filter(id=task_id)
-    if task:
-        task.delete()
-        return HttpResponse("Задачка удалена")
-    return HttpResponse("Task not found")
+# @never_cache
+# @csrf_exempt
+# @require_http_methods(["DELETE"])
+# def delete_task(request: HttpRequest, task_id: int):
+#     task = Task.objects.filter(id=task_id)
+#     if task:
+#         task.delete()
+#         return HttpResponse("Задачка удалена")
+#     return HttpResponse("Task not found")
 
 
 # @csrf_exempt
@@ -255,34 +355,34 @@ def delete_task(request: HttpRequest, task_id: int):
 #         #     title=data["title"]
 #         # )
 #         # task.save()
-@never_cache
-@csrf_exempt
-def task_create(request: HttpRequest):
-    if request.method == 'POST':
-        data = json.loads(request.body)
+# @never_cache
+# @csrf_exempt
+# def task_create(request: HttpRequest):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
 
-        task = Task.objects.create(
-            title=data['title'],
-            complition=data.get('complition', False)
-        )
+#         task = Task.objects.create(
+#             title=data['title'],
+#             complition=data.get('complition', False)
+#         )
 
-        if 'tags' in data:
-            tags = Tag.objects.filter(id__in=data['tags'])
-            task.tag.set(tags)
+#         if 'tags' in data:
+#             tags = Tag.objects.filter(id__in=data['tags'])
+#             task.tag.set(tags)
 
-        tags = task.tag.all()
-        tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+#         tags = task.tag.all()
+#         tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
         
-        response_data = preparate_data(task, tags_list)
+#         response_data = preparate_data(task, tags_list)
         
-        response_data['_links'] = {
-            'self': {
-                'type': 'GET',
-                'url': f'{request.build_absolute_uri("/")}tasks/{task.id}/'
-            }
-        }
+#         response_data['_links'] = {
+#             'self': {
+#                 'type': 'GET',
+#                 'url': f'{request.build_absolute_uri("/")}tasks/{task.id}/'
+#             }
+#         }
         
-        return JsonResponse(response_data, status=201)
+#         return JsonResponse(response_data, status=201)
     
 
 
