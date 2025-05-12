@@ -234,19 +234,66 @@ def get_tasks_uncompleted(request: HttpRequest):
 
         return JsonResponse(tasks_list, safe=False)
 
-@cache_control (
+@cache_control(
     private=True,
-    max_age = 1440 * 60, # 24 часа
-    no_cache = True,
-    no_site = False
+    max_age=1440 * 60,  # 24 часа
+    no_cache=True,
+    no_site=False
 )
-def tag_list(request: HttpRequest):
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def tag_list_create(request: HttpRequest):
     if request.method == 'GET':
-        # test = Task.objects.filter(tag=1)
-        # print(test)
         tags = Tag.objects.all()
         tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
         return JsonResponse(tags_list, safe=False)
+    
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            if not data.get('name'):
+                return JsonResponse({"error": "Name field is required"}, status=400)
+                
+            tag = Tag.objects.create(name=data['name'])
+            
+            response_data = {
+                "id": tag.id,
+                "name": tag.name,
+                "_links": {
+                    'self': {
+                        'type': 'GET',
+                        'url': f'{request.build_absolute_uri("/")}tags/{tag.id}/'
+                    }
+                }
+            }
+            return JsonResponse(response_data, status=201)
+        
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON data"}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+
+
+
+
+
+
+
+# @cache_control (
+#     private=True,
+#     max_age = 1440 * 60, # 24 часа
+#     no_cache = True,
+#     no_site = False
+# )
+# def tag_list(request: HttpRequest):
+#     if request.method == 'GET':
+#         # test = Task.objects.filter(tag=1)
+#         # print(test)
+#         tags = Tag.objects.all()
+#         tags_list = [{"id": tag.id, "name": tag.name} for tag in tags]
+#         return JsonResponse(tags_list, safe=False)
 
 # @cache_control (
 #     private=True,
